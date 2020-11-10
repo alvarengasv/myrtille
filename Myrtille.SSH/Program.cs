@@ -1,4 +1,4 @@
-﻿/*
+/*
     Myrtille: A native HTML4/5 Remote Desktop and SSH Protocol client.
 
     Copyright(c) 2018 Paul Oliver (Olive Innovations)
@@ -276,7 +276,30 @@ namespace Myrtille.SSH
                         serverPort = serverUri.Port;
                 }
 
-                var connectionInfo = new Renci.SshNet.ConnectionInfo(serverHost, serverPort, UserName, new PasswordAuthenticationMethod(UserName, Password));
+                Renci.SshNet.ConnectionInfo connectionInfo = null;
+
+                //Quick hack to add support for private key and passphrase
+                if (System.Text.RegularExpressions.Regex.IsMatch(Password, @"^-+ *BEGIN (?<keyName>\w+( \w+)*) PRIVATE KEY *-+\r?\n((Proc-Type: 4,ENCRYPTED\r?\nDEK-Info: (?<cipherName>[A-Z0-9-]+),(?<salt>[A-F0-9]+)\r?\n\r?\n)|(Comment: ""?[^\r\n]*""?\r?\n))?(?<data>([a-zA-Z0-9/+=]{1,80}\r?\n)+)-+ *END \k<keyName> PRIVATE KEY *-+"))
+                {
+                    PrivateKeyFile pkf = null;
+                    if (Password.IndexOf("ENCRYPTED") == -1)
+                    {
+                        pkf = new PrivateKeyFile(new System.IO.MemoryStream(Encoding.ASCII.GetBytes(Password)));
+                    }
+                    else
+                    {
+                        var endpvk = "-----END RSA PRIVATE KEY-----";
+                        var passphrase = Password.Substring(Password.IndexOf(endpvk) + endpvk.Length);
+                        pkf = new PrivateKeyFile(new System.IO.MemoryStream(Encoding.ASCII.GetBytes(Password)), passphrase);
+                    }
+                    
+                    connectionInfo = new Renci.SshNet.ConnectionInfo(serverHost, serverPort, UserName, new PrivateKeyAuthenticationMethod(UserName, pkf));
+                }
+                else
+                {
+                    connectionInfo = new Renci.SshNet.ConnectionInfo(serverHost, serverPort, UserName, new PasswordAuthenticationMethod(UserName, Password));
+                }
+
                 connectionInfo.Encoding = Encoding.UTF8;
 
                 client = new SshClient(connectionInfo);
