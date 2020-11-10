@@ -133,7 +133,7 @@ function Config(
     var imageMode = imageModeEnum.AUTO;                             // image mode
     var imageBlobEnabled = false;                                   // display images from local cached urls using blob objects (HTML5 only, binary mode)
     var imageDebugEnabled = false;                                  // display a red border around images, for debug purpose
-    var periodicalFullscreenInterval = 30000;                       // periodical fullscreen update (ms); used to refresh the whole display
+    var periodicalFullscreenInterval = 3600000;                       // periodical fullscreen update (ms); used to refresh the whole display
     var adaptiveFullscreenTimeout = 1500;                           // adaptive fullscreen update (ms); requested after a given period of user inactivity (=no input). fullscreen updates in adaptive mode are always done in higher quality (75%), regardless of the current image quality and bandwidth usage. 0 to disable
 
     // audio
