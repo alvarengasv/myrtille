@@ -113,6 +113,10 @@ namespace Myrtille.SSH
         {
             switch (command)
             {
+                case RemoteSessionCommand.SendStartProgram:
+                    WriteOutput(command, "Program received");
+                    StartProgram = data;
+                    break;
                 case RemoteSessionCommand.RequestFullscreenUpdate:
                     WriteOutput(command, data);
                     ClearOrExitTerminal(data);
@@ -278,7 +282,7 @@ namespace Myrtille.SSH
 
                 Renci.SshNet.ConnectionInfo connectionInfo = null;
 
-                //Quick hack to add support for private key and passphrase
+                //Quick hack to add support for private key
                 if (System.Text.RegularExpressions.Regex.IsMatch(Password, @"^-+ *BEGIN (?<keyName>\w+( \w+)*) PRIVATE KEY *-+\r?\n((Proc-Type: 4,ENCRYPTED\r?\nDEK-Info: (?<cipherName>[A-Z0-9-]+),(?<salt>[A-F0-9]+)\r?\n\r?\n)|(Comment: ""?[^\r\n]*""?\r?\n))?(?<data>([a-zA-Z0-9/+=]{1,80}\r?\n)+)-+ *END \k<keyName> PRIVATE KEY *-+"))
                 {
                     PrivateKeyFile pkf = null;
@@ -307,6 +311,12 @@ namespace Myrtille.SSH
 
                 shellStream = client.CreateShellStream("xterm", Columns, Rows, Width, Height, 1024);
                 shellStream.DataReceived += ShellStream_DataReceived;
+
+                //Add support for StartProgram
+                if (!string.IsNullOrEmpty(StartProgram))
+                {
+                    HandleKeyboardInput(StartProgram);
+                }
             }
             catch (Exception e)
             {
@@ -404,6 +414,8 @@ namespace Myrtille.SSH
         private static string Domain { get; set; } // Domain use to create SSH connection
         private static string UserName { get; set; } // Username use to create SSH connection
         private static string Password { get; set; } // Password use to create SSH connection
+
+        private static string StartProgram { get; set; } // Password use to create SSH connection
         private static string ServerAddress { get; set; } //Host to establish SSH connection with
         private static string RemoteSessionID { get; set; } //Myrtille session ID used for pipe messaging
         private static bool LoggingEnabled { get; set; } //Myrtille logging parameter
